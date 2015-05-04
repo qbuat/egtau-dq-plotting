@@ -1,0 +1,133 @@
+#!/usr/bin/env python
+import os
+import logging
+import argparse
+import subprocess
+
+PLOTTING_ONLINE = [
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtFinal',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_HadRadius',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EMFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_IsoFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_centFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_NTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_nWideTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_dRmax',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtovPtLead',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Phi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Had1Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Rcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/frac73',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_em',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_had',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Rcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Eratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F3',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Weta2',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Wstot',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhHadEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhRcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhF1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_pt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_phi0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_z0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_dPhi0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_nPIXHits',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_nSCTHits',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/ClusterContainerSize',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Phi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/El_ClusterEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/El_EtCone20',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/dEta',
+]
+
+PLOTTING_TIER0 = [
+    'HLT/Egamma/photon/L1/EmClus',
+    'HLT/Egamma/photon/L1/Eta',
+    'HLT/Egamma/photon/L1/Phi',
+    'HLT/Egamma/photon/L1/EmIsol',
+    'HLT/Egamma/photon/L1/HadCore',
+    'HLT/Egamma/photon/L1/HadIsol',
+    'HLT/Egamma/photon/L2Calo/Et',
+    'HLT/Egamma/photon/L2Calo/eta',
+    'HLT/Egamma/photon/L2Calo/phi',
+    'HLT/Egamma/photon/L2Calo/HadEt',
+    'HLT/Egamma/photon/L2Calo/Rcore',
+    'HLT/Egamma/photon/L2Calo/Rstrip',
+]
+
+
+if __name__ == '__main__':
+    # setup a proper logging system
+    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger(os.path.basename(__file__))
+    
+    # setup the argument parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('runs', nargs='*', help='list of runs to analyse')
+    parser.add_argument('--ref', type=int, default=259416)
+    parser.add_argument('--t0', default=False, action='store_true', help='True: Tiers0 / False: Online')
+    # parser.add_argument('--plots', nargs='*', default=None, help='list of plots to draw')
+    args = parser.parse_args()
+    
+    if args.t0:
+        pattern = 'express_express'
+    else:
+        pattern = 'Histogramming-DQM'
+
+    if args.t0:
+        plot_list_str = ' '.join(PLOTTING_TIER0)
+    else:
+        plot_list_str = ' '.join(PLOTTING_ONLINE)
+
+    # download the required files
+    for run in args.runs + [args.ref]:
+        log.info('Download {0}'.format(run))
+        if args.t0:
+            cmd = 'source ~trigeg/public/get_from_eos.sh {0}'.format(run)
+        else:
+            cmd = 'source ~trigeg/public/get_from_web.sh {0}'.format(run)
+        subprocess.call(cmd, shell=True)
+
+    # loop over the specified runs
+    root_files = filter(lambda s: pattern in s, os.listdir('./'))
+
+    # get the reference rootfile
+    ref_root_file = filter(lambda s: str(args.ref) in s, root_files)
+    if len(ref_root_file) !=1:
+        raise RuntimeError('Wrong size !')
+    ref_root_file = ref_root_file[0]
+
+    for run in args.runs:
+        log.info(run)
+        # get the run rootfiles
+        root_file = filter(lambda s: run in s, root_files)
+        if len(root_file) !=1:
+            raise RuntimeError('Wrong size !')
+        root_file = root_file[0]
+        log.info(root_file)
+        cmd = './plot-sequence {0} --ref {1} --plots {2}'.format(
+            root_file, ref_root_file, plot_list_str)
+        if args.t0:
+            cmd += ' --t0 --run-new {0} --run-ref {1}'.format(
+                run, args.ref)
+        print cmd
+        subprocess.call(cmd, shell=True)

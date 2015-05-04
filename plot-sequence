@@ -1,0 +1,197 @@
+#!/usr/bin/env python
+
+import ROOT
+import os
+import logging
+
+# setup a proper logging system
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(os.path.basename(__file__))
+
+PLOTTING_LIST = [
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtFinal',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_HadRadius',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EMFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_IsoFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_centFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_NTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_nWideTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_dRmax',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtovPtLead',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Phi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Had1Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Rcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/frac73',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_em',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_had',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Rcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Eratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F3',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Weta2',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Wstot',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhHadEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhRcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhF1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_pt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_phi0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_z0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_dPhi0',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_nPIXHits',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_nSCTHits',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/ClusterContainerSize',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Et',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Eta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigCaloClusterMaker_slw/Phi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/CutCounter',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/El_ClusterEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/El_EtCone20',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigEFElectronHypo_e0_NoCut/dEta',
+]
+
+
+def get_hist(root_file, name):
+    
+    h = root_file.Get(name)
+    if isinstance(h, ROOT.TH1):
+        return h
+    else:
+        log.warning('{0} in {1} is not an instance of ROOT.TH1'.format(
+            name, root_file.GetName()))
+        return None
+        
+def get_y_max(h1, h2=None):
+    
+    h1_max = h1.GetBinContent(h1.GetMaximumBin())
+    if h2 is None:
+        return h1_max
+
+    h2_max = h2.GetBinContent(h1.GetMaximumBin())
+    return max(h1_max, h2_max)
+
+def compare_plot(href, hnew=None):
+
+    href.SetTitle('')
+    href.SetLineColor(ROOT.kBlue)
+    href.SetLineWidth(2)
+    href.SetLineStyle(ROOT.kDashed)
+    ref_int = href.Integral()
+    if ref_int != 0.:
+        href.Scale(1. / ref_int)
+
+    new_int = -9999.
+    c = ROOT.TCanvas()
+    href.Draw('HIST')
+    if hnew is not None:
+        hnew.SetTitle('This Run')
+        hnew.SetLineColor(ROOT.kRed)
+        hnew.SetMarkerColor(ROOT.kRed)
+        new_int = hnew.Integral()
+        hnew.Sumw2()
+        if new_int != 0.:
+            hnew.Scale(1. / new_int)
+            
+        y_max = get_y_max(hnew, href)
+        href.GetYaxis().SetRangeUser(0, y_max * (1 + 0.05))
+        hnew.Draw('samePE')
+
+    return c
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument('new', type=str, help='name of the rootfile hosting the histograms to check')
+    parser.add_argument('--ref', type=str, default='r0000259416_lEoR_ATLAS_MDA-Histogramming-DQM_Histogramming-DQM.root',
+                        help='name of the rootfile hosting the reference histograms')
+    parser.add_argument('--plots', nargs='*', default=None, help='list of plots to draw')
+    parser.add_argument('--t0', default=False, action='store_true', help='True: Tiers0 / False: Online')
+    parser.add_argument('--run-new', default=0, type=int, help='run number (useful only for t0)')
+    parser.add_argument('--run-ref', default=259416, type=int, help='run number (useful only for t0)')
+    parser.add_argument('--repro', default=False, action='store_true')
+    args = parser.parse_args()
+
+    ROOT.gStyle.SetOptStat(0)
+    ROOT.gROOT.SetBatch(True)
+
+    fref = ROOT.TFile(args.ref)
+    fnew = ROOT.TFile(args.new)
+
+    # Set the list of plots to do
+    # default use the list from the beginning of this file
+    plot_list = PLOTTING_LIST
+    if args.plots is not None:
+        plot_list = args.plots
+    
+    for name in plot_list:
+        log.info('Drawing {0}'.format(name))
+        if args.t0:
+            href = get_hist(fref, 'run_{0}/'.format(args.run_ref) + name)
+            hnew = get_hist(fnew, 'run_{0}/'.format(args.run_new) + name)
+        elif args.repro:
+            href = get_hist(fref, name.replace('Histogramming/TopMIG-OH_HLT/EXPERT/', ''))
+            hnew = get_hist(fnew, name.replace('Histogramming/TopMIG-OH_HLT/EXPERT/', ''))
+        else:
+            href = get_hist(fref, name)
+            hnew = get_hist(fnew, name)
+            
+        if href is None:
+            c = ROOT.TCanvas()
+            hstupid = ROOT.TH1F('', '', 10, 0, 1)
+            hstupid.Draw()
+            empty_text = ROOT.TText(0.2, 0.5, 'reference is empty')
+            empty_text.SetNDC(True)
+            empty_text.Draw()
+        else:
+            c = ROOT.TCanvas()
+            label = ROOT.TText(
+                c.GetRightMargin() + 0.01, 1 - c.GetTopMargin() - 0.03,
+                'Integrals -- Ref: {0:1.2f} / New: {1:1.2f}'.format(
+                    href.Integral(), 
+                     -9999 if hnew is None else hnew.Integral()))
+            label.SetNDC(True)
+            label.SetTextSize(0.03)
+            c = compare_plot(href, hnew)
+            label.Draw()
+            leg = ROOT.TLegend(
+                0.8, 0.8, 
+                1 - c.GetTopMargin(), 
+                1 - c.GetRightMargin())
+            leg.AddEntry(href, 'ref')
+            if hnew is not None:
+                leg.AddEntry(hnew, 'new')
+            leg.Draw('same')
+        title = ROOT.TText(
+            c.GetRightMargin(), 1 - c.GetTopMargin() + 0.01,
+            name.replace('Histogramming/TopMIG-OH_HLT/EXPERT/', ''))
+        title.SetNDC(True)
+        title.SetTextSize(0.04)
+        title.Draw()
+        c.SaveAs(name.replace('/', '_') + '.png')
+            
+    plot_names = [n.replace('/', '_') + '.png' for n in plot_list]
+    plot_names_str = ' '.join(plot_names)
+
+    log.info('MONTAGE ..')
+    cmd = 'montage -tile 2x2 -geometry 800x800+3+3 {0} {1}'.format(
+        plot_names_str, args.new + '.pdf')
+    import subprocess
+    subprocess.call(cmd, shell=True)
+
+    log.info('CLEANING')
+    for f in plot_names:
+        os.remove(f)
