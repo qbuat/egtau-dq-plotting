@@ -3,18 +3,50 @@ import os
 import logging
 import argparse
 import subprocess
+import re
+import copy
 
 PLOTTING_ONLINE = [
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_Et',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtFinal',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/PhiL1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EtaL1',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_HadRadius',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EMFrac',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_IsoFrac',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_centFrac',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_NTrk',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_nWideTrk',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_dRmax',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtovPtLead',
+   # 'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_NTrk',
+   # 'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_nWideTrk',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_dRmax',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_EtovPtLead',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/dPhiEFTau_RoI',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/dEtaEFTau_RoI',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/EF_nCand',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPreselection/nRoI_EFTauTracks',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPreselection/EF_NTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPreselection/EF_nWideTrk',
+    # 'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_NTrk',
+    # 'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_nWideTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_AvgInteractions',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_beamspot_x',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_beamspot_y',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_beamspot_z',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_EMRadius',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_HadRadius',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_EMFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_IsoFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_centFrac',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_ChPiEMEOverCaloEME',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_EtovPtLead',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_dRmax',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_ipSigLeadTrk',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_TrkAvgDist',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_trFlightPathSig',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_massTrkSys',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauPrecision/EF_EMPOverTrkSysP',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauDiscriminant2015/EF_BDTScore',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecCosmics_Tau2012/nRoI_EFTauCells',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/TrigTauRecMerged_TauCaloOnly/nRoI_EFTauCells',
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Et',
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eta',
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Phi',
@@ -22,25 +54,26 @@ PLOTTING_ONLINE = [
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Rcore',
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/frac73',
     'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_eGamma/Eratio',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_em',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_had',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Rcore',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Eratio',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F1',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F3',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Weta2',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Wstot',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/CutCounter',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dEta',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dPhi',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEt',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhHadEt',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhRcore',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhEratio',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/PhF1',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dEta',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/dPhi',
-    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_EtCut/CutCounter',
+# not available right now
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_em',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Et_had',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Rcore',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Eratio',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F1',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/F3',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Weta2',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/Wstot',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/CutCounter',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dEta',
+#    'Histogramming/TopMIG-OH_HLT/EXPERT/T2CaloEgamma_e0_NoCut/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/PhEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/PhHadEt',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/PhRcore',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/PhEratio',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/PhF1',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/dEta',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/dPhi',
+    'Histogramming/TopMIG-OH_HLT/EXPERT/L2PhotonHypo_g3_loose/CutCounter',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_pt',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_eta',
     'Histogramming/TopMIG-OH_HLT/EXPERT/TrigFastTrackFinder_eGamma/trk_phi0',
@@ -60,18 +93,27 @@ PLOTTING_ONLINE = [
 ]
 
 PLOTTING_TIER0 = [
-    'HLT/Egamma/photon/L1/EmClus',
-    'HLT/Egamma/photon/L1/Eta',
-    'HLT/Egamma/photon/L1/Phi',
-    'HLT/Egamma/photon/L1/EmIsol',
-    'HLT/Egamma/photon/L1/HadCore',
-    'HLT/Egamma/photon/L1/HadIsol',
-    'HLT/Egamma/photon/L2Calo/Et',
-    'HLT/Egamma/photon/L2Calo/eta',
-    'HLT/Egamma/photon/L2Calo/phi',
-    'HLT/Egamma/photon/L2Calo/HadEt',
-    'HLT/Egamma/photon/L2Calo/Rcore',
-    'HLT/Egamma/photon/L2Calo/Rstrip',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFEMRadius',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFEMFraction',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFEt',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFEtRaw',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFEta',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFPhi',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFnTrack',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/EFTau/hEFnWideTrack',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/L1RoI/hL1RoIEta',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/L1RoI/hL1RoIPhi',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/L1RoI/hL1RoITauClus',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/L1RoI/hL1RoIHadIsol',
+    'HLT/TauMon/Expert/tau8_cosmic_ptonly/L1RoI/hL1RoIEMIso',
+    ]
+
+
+LOGY_PATTERNS = [
+    re.compile('.*EF_NTrk'),
+    re.compile('.*EF_nWideTrk'),
+    re.compile('.*EF_EtFinal'),
+    re.compile('.*EF_Et$'),
 ]
 
 
@@ -85,6 +127,8 @@ if __name__ == '__main__':
     parser.add_argument('runs', nargs='*', help='list of runs to analyse')
     parser.add_argument('--ref', type=int, default=259416)
     parser.add_argument('--t0', default=False, action='store_true', help='True: Tiers0 / False: Online')
+    parser.add_argument('--comm', default=False, action='store_true', help='True: data15_comm / False: data15_cos')
+    parser.add_argument('--nolog', default=False, action='store_true', help='Plot all the figs in a linear scale')
     # parser.add_argument('--plots', nargs='*', default=None, help='list of plots to draw')
     args = parser.parse_args()
     
@@ -94,15 +138,32 @@ if __name__ == '__main__':
         pattern = 'Histogramming-DQM'
 
     if args.t0:
-        plot_list_str = ' '.join(PLOTTING_TIER0)
+        plot_list = PLOTTING_TIER0
     else:
-        plot_list_str = ' '.join(PLOTTING_ONLINE)
+        plot_list = PLOTTING_ONLINE
+
+    plot_list_linear = copy.copy(plot_list)
+    plot_list_log = []
+    if not args.nolog:
+        for plot in plot_list:
+            for pat in LOGY_PATTERNS:
+                if re.match(pat, plot):
+                    plot_list_linear.remove(plot)
+                    plot_list_log.append(plot)
+                    break
+    log.info(plot_list_linear)
+    log.info(plot_list_log)
+
+
 
     # download the required files
     for run in args.runs + [args.ref]:
         log.info('Download {0}'.format(run))
         if args.t0:
-            cmd = 'source ~trigeg/public/get_from_eos.sh {0}'.format(run)
+            if args.comm:
+                cmd = 'source ~trigeg/public/get_from_eos_comm.sh {0}'.format(run)
+            else:
+                cmd = 'source ~trigeg/public/get_from_eos_cos.sh {0}'.format(run)
         else:
             cmd = 'source ~trigeg/public/get_from_web.sh {0}'.format(run)
         subprocess.call(cmd, shell=True)
@@ -111,23 +172,57 @@ if __name__ == '__main__':
     root_files = filter(lambda s: pattern in s, os.listdir('./'))
 
     # get the reference rootfile
-    ref_root_file = filter(lambda s: str(args.ref) in s, root_files)
-    if len(ref_root_file) !=1:
+    ref_root_file = filter(lambda s: str(args.ref) in s and '.pdf' not in s, root_files)
+    if len(ref_root_file) == 0:
         raise RuntimeError('Wrong size !')
+    elif len(ref_root_file) > 1:
+        log.warning('The reference is not unique !')
+
     ref_root_file = ref_root_file[0]
 
     for run in args.runs:
         log.info(run)
         # get the run rootfiles
-        root_file = filter(lambda s: run in s, root_files)
-        if len(root_file) !=1:
+        root_file = filter(lambda s: run in s and '.pdf' not in s, root_files)
+        if len(root_file) == 0:
             raise RuntimeError('Wrong size !')
+        elif len(root_file) > 1:
+            log.warning('The root file is not unique !')
+        
         root_file = root_file[0]
         log.info(root_file)
+
+        # print linear plots
         cmd = './plot-sequence {0} --ref {1} --plots {2}'.format(
-            root_file, ref_root_file, plot_list_str)
+            root_file, ref_root_file, ' '.join(plot_list_linear))
         if args.t0:
             cmd += ' --t0 --run-new {0} --run-ref {1}'.format(
                 run, args.ref)
         print cmd
         subprocess.call(cmd, shell=True)
+
+
+        # print log-Y plots
+        if len(plot_list_log) != 0:
+            cmd = './plot-sequence {0} --ref {1} --plots {2}'.format(
+                root_file, ref_root_file, ' '.join(plot_list_log))
+            if args.t0:
+                cmd += ' --t0 --run-new {0} --run-ref {1}'.format(
+                run, args.ref)
+            cmd += ' --logy'
+            print cmd
+            subprocess.call(cmd, shell=True)
+
+        plot_names = [n.replace('/', '_') + '.png' for n in plot_list]
+        plot_names_str = ' '.join(plot_names)
+
+        log.info('MONTAGE ..')
+        cmd = 'montage -tile 2x2 -geometry 800x800+3+3 {0} {1}'.format(
+            plot_names_str, root_file + '.pdf')
+
+        subprocess.call(cmd, shell=True)
+
+        log.info('CLEANING')
+        for f in plot_names:
+            os.remove(f)
+
